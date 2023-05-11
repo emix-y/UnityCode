@@ -10,8 +10,7 @@ public class Connection : MonoBehaviour
     WebSocket websocket;
     public float temp;
     public float humid;
-    public GameObject TheGaurdian;
-    private GameObject sphere;
+
 
     // Start is called before the first frame update
     async void Start()
@@ -35,36 +34,24 @@ public class Connection : MonoBehaviour
 
         websocket.OnMessage += (bytes) =>
         {
-            Debug.Log("OnMessage!");
-            Debug.Log(bytes);
+            
 
             // getting the message as a string
             var message = System.Text.Encoding.UTF8.GetString(bytes);
-            // Debug.Log("OnMessage! " + message);
+            Debug.Log("OnMessage! " + message);
 
             string[] StringValues = message.Split(new string[] { "," }, System.StringSplitOptions.RemoveEmptyEntries);
             humid = float.Parse(StringValues[0]);
             temp = float.Parse(StringValues[1]);
         };
 
-        // Instantiate the sphere object
-        sphere = Instantiate(TheGaurdian, Vector3.zero, Quaternion.identity);
-
+        InvokeRepeating("SendWebSocketMessage", 0.0f, 0.3f);
         // waiting for messages
         await websocket.Connect();
     }
 
     void Update()
     {
-        // Map the temperature to the RGB color values
-        float red = Mathf.Clamp(temp / 50f, 0f, 1f);
-        float green = Mathf.Clamp(1f - (temp / 50f), 0f, 1f);
-        float blue = 0f;
-        sphere.GetComponent<Renderer>().material.color = new Color(red, green, blue);
-
-        // Map the humidity to the scale of the sphere
-        float scale = Mathf.Lerp(0.5f, 2f, humid / 100f);
-        sphere.transform.localScale = new Vector3(scale, scale, scale);
 
 #if !UNITY_WEBGL || UNITY_EDITOR
         websocket.DispatchMessageQueue();
@@ -82,8 +69,7 @@ public class Connection : MonoBehaviour
 
     private async void OnApplicationQuit()
     {
-        // Destroy the sphere object
-        Destroy(sphere);
+   
 
         await websocket.Close();
     }
